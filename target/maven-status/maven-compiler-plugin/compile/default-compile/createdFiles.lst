@@ -1,0 +1,9 @@
+xyz\derkades\metadatasaver\file\audio\MusicMetadata.class
+xyz\derkades\metadatasaver\Main.class
+xyz\derkades\metadatasaver\file\audio\Mp3MetadataJAudioTagger.class
+xyz\derkades\metadatasaver\file\audio\Mp3MetadataMp3agic.class
+xyz\derkades\metadatasaver\file\FileMetadata.class
+xyz\derkades\metadatasaver\file\video\MkvMetadata.class
+xyz\derkades\metadatasaver\file\video\Mp4Metadata.class
+xyz\derkades\metadatasaver\file\video\VideoMetadata.class
+xyz\derkades\metadatasaver\file\audio\FlacMetadata.class

@@ -1,0 +1,20 @@
+# The url to your plex media server, with http(s)://, without trailing slash.
+url: 'https://plex.yourdomain.com'
+
+# https://support.plex.tv/articles/204059436-finding-an-authentication-token-x-plex-token/
+token: 'VkDGbQasdDDAuiFvUEqC'
+
+# When set to -1, the program will print a list of libraries with IDs then exit. 
+# Look for the id of your music library and enter it here.
+library: -1
+
+# An error might occur while trying to modify the metadata of an audio file.
+# When this is set to true, the program will print the error and continue modifying metadata of other tracks.
+# When this is set to false, the program will print the error and exit.
+continue-with-errors: false
+
+# This program will alter the audio files on your computer/server.
+# Please make a backup of your library before using this program (which you should already have regardless!)
+# By setting this to true you accept that this program does not come with any warranty.
+# The program will not start with this option set to false.
+accept-warning: false
