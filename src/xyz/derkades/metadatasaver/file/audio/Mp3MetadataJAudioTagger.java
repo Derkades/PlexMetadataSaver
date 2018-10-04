@@ -120,7 +120,7 @@ public class Mp3MetadataJAudioTagger extends MusicMetadata {
 	public void save() throws IOException {
 		try {
 			audioFile.setTag(tag);
-			audioFile.commit();
+			AudioFileIO.write(audioFile);
 		} catch (CannotWriteException e) {
 			throw new IOException(e);
 		}
