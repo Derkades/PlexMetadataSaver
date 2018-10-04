@@ -103,14 +103,28 @@ public class Main {
 			
 			if (libraryId < 0) {
 				// List libraries and exit
+				
+				System.out.println("You have not specified a library id. Here's a list of all your music libraries:");
+				
 				for (Library library : libraries) {
 					if (!(library instanceof MusicLibrary)) {
 						continue;
 					}
 					
-					System.out.printf("%s: %s", library.getId(), library.getTitle());
+					int numberOfSpaces = 10 - String.valueOf(library.getId()).toCharArray().length;
+					
+					String spaces = "";
+					for (int i = 0; i < numberOfSpaces; i++) {
+						spaces += " ";
+					}
+					
+					System.out.printf("%s%s%s", library.getId(), spaces, library.getTitle());
 					System.out.println();
 				}
+				
+				System.out.println();
+				System.out.println("Please pick a library and enter the id in config.yml");
+				
 				System.exit(0);
 			}
 			
@@ -134,18 +148,27 @@ public class Main {
 			
 			MusicLibrary selectedLibrary = (MusicLibrary) selectedGenericLibrary;
 			
+			System.out.println("Track scanning starting. This will probably take a long time.");
+			System.out.println();
+			
+			int trackProcessedCount = 0;
+			
 			for (Artist artist : selectedLibrary.getArtists()) {
 				for (Album album : artist.getAlbums()) {
-					tracks.addAll(album.getTracks());
+					List<Track> albumTracks = album.getTracks();
+					tracks.addAll(albumTracks);
+					trackProcessedCount += albumTracks.size();
+					System.out.print("\rProcessed " + trackProcessedCount + " tracks.");
 				}
 			}
+			
+			System.out.println();
 		} catch (IOException | SAXException e) {
 			e.printStackTrace();
 			System.exit(1);
 		}
 		
 		System.out.println("Done getting track list from plex!");
-		System.out.printf("Found %s tracks in %s seconds.\n", tracks.size(), (System.currentTimeMillis() - startTime) / 1000);
 		
 		long metadataSavingStartTime = System.currentTimeMillis();
 		int modifiedTracks = 0;
@@ -154,7 +177,7 @@ public class Main {
 			try {
 				File file = new File(track.getFile());
 				
-				if (file.exists()) {
+				if (!file.exists()) {
 					System.err.println("The file " + file.getAbsolutePath() + " could not be found. Are you running this program on the plex media server server?");
 					continue;
 				}
@@ -170,18 +193,17 @@ public class Main {
 					continue;
 				}
 				
-				// TODO Add support for all metadata types in MusicMetadata class
+				// TODO Track number
 				
 				String plexAlbum = track.getAlbum().getTitle();
 				String plexAlbumArtist = track.getAlbum().getArtist().getTitle();
-				String plexArtist = "Artist";
+				String plexArtist = track.getArtistName();
 				String plexTitle = track.getTitle();
-				String plexTrack = "1";
-				String plexYear = "2023";
+				String plexYear = track.getYear();
 				
 				List<String> logMessages = new ArrayList<>();
 				
-				if (!metadata.getAlbum().equals(plexAlbum)) {
+				if (!metadata.getAlbum().equals(plexAlbum) && !plexAlbum.equals("[Unknown Album]")) {
 					logMessages.add(String.format("Album: %s -> %s", metadata.getAlbum(), plexAlbum));
 					metadata.setAlbum(plexAlbum);
 				}
@@ -191,7 +213,7 @@ public class Main {
 					metadata.setAlbum(plexAlbumArtist);
 				}
 				
-				if (!metadata.getArtist().equals(plexArtist)) {
+				if (!metadata.getArtist().equals(plexArtist) && !plexArtist.equals("")) {
 					logMessages.add(String.format("Artist: %s -> %s", metadata.getArtist(), plexArtist));
 					metadata.setAlbum(plexArtist);
 				}
@@ -201,21 +223,26 @@ public class Main {
 					metadata.setAlbum(plexTitle);
 				}
 				
-				if (!metadata.getTrack().equals(plexTrack)) {
+				/*if (!metadata.getTrack().equals(plexTrack)) {
 					logMessages.add(String.format("Track: %s -> %s", metadata.getTrack(), plexTrack));
 					metadata.setAlbum(plexTrack);
-				}
+				}*/
 				
 				if (!metadata.getYear().equals(plexYear)) {
 					logMessages.add(String.format("Year: %s -> %s", metadata.getYear(), plexYear));
 					metadata.setAlbum(plexYear);
 				}
 				
+				/*if (metadata.getArtist().equals("")) {
+					logMessages.add("Artist is empty, used album artist (" + metadata.getAlbumArtist() + ")");
+					metadata.setArtist(metadata.getAlbumArtist());
+				}*/
+				
 				if (logMessages.isEmpty()) {
 					System.out.println("Did not modify " + file.getAbsolutePath());
 				} else {
-					System.out.println("Modified " + file.getAbsolutePath());
-					logMessages.forEach(System.out::println);
+					metadata.save();
+					System.out.println("Modified " + file.getAbsolutePath() + " [" + String.join(", ", logMessages) + "]");
 					modifiedTracks++;
 				}
 			} catch (IOException e) {
@@ -228,13 +255,14 @@ public class Main {
 			}
 		}
 		
-		System.out.println("Done saving metadata to disk!");
-		System.out.printf("Processed %s tracks in %s seconds.\n", modifiedTracks, (System.currentTimeMillis() - metadataSavingStartTime) / 1000);
+		System.out.println("Done saving metadata to disk! Updated " + modifiedTracks + " files.");
+		System.out.printf("Retrieving metadata from plex took %s seconds.\n", (System.currentTimeMillis() - startTime) / 1000);
+		System.out.printf("Writing metadata to files on disk took %s seconds.\n", (System.currentTimeMillis() - metadataSavingStartTime) / 1000);
 	}
 	
 	private static void saveDefaultConfig(File config) {
 		try {
-			FileUtils.copyOutOfJar(Main.class, "xyz/derkades/metadatasaver/default-config.yml", config);
+			FileUtils.copyOutOfJar(Main.class, "/xyz/derkades/metadatasaver/default-config.yml", config);
 		} catch (IOException e) {
 			throw new RuntimeException(e);
 		}
